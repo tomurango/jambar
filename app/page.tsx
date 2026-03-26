@@ -25,14 +25,42 @@ export default function Home() {
     setError(null);
   };
 
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement("canvas");
+        const MAX = 2048;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) {
+            height = Math.round((height * MAX) / width);
+            width = MAX;
+          } else {
+            width = Math.round((width * MAX) / height);
+            height = MAX;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.85);
+      };
+      img.src = url;
+    });
+  };
+
   const handleExtract = async () => {
     if (!imageFile) return;
     setLoading(true);
     setError(null);
 
     try {
+      const compressed = await compressImage(imageFile);
       const formData = new FormData();
-      formData.append("image", imageFile);
+      formData.append("image", compressed, "image.jpg");
 
       const res = await fetch("/api/extract-jan", {
         method: "POST",
