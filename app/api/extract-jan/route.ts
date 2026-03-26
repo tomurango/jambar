@@ -54,13 +54,30 @@ JANコードは通常8桁または13桁の数字です。
 
     const text = message.content[0].type === "text" ? message.content[0].text : "";
 
-    // JSONを抽出
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    // コードブロックやマークダウンを除去してJSONを抽出
+    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ error: "JANコードを抽出できませんでした" }, { status: 400 });
     }
 
-    const result = JSON.parse(jsonMatch[0]);
+    let result;
+    try {
+      result = JSON.parse(jsonMatch[0]);
+    } catch {
+      // JSONが壊れている場合、itemsの中身だけ正規表現で取り出す
+      const items: { name: string; jan: string }[] = [];
+      const itemMatches = jsonMatch[0].matchAll(/"jan"\s*:\s*"(\d+)"[^}]*"name"\s*:\s*"([^"]*)"|"name"\s*:\s*"([^"]*)"[^}]*"jan"\s*:\s*"(\d+)"/g);
+      for (const m of itemMatches) {
+        const jan = m[1] || m[4];
+        const name = m[2] || m[3] || "";
+        if (jan) items.push({ name, jan });
+      }
+      if (items.length === 0) {
+        return NextResponse.json({ error: "JANコードを抽出できませんでした" }, { status: 400 });
+      }
+      result = { items };
+    }
     return NextResponse.json(result);
   } catch (error) {
     console.error(error);
