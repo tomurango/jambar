@@ -20,11 +20,11 @@ function BarcodeItem({ item }: BarcodeItemProps) {
     try {
       JsBarcode(svgRef.current, item.jan, {
         format: item.jan.length === 8 ? "EAN8" : "EAN13",
-        width: 2,
-        height: 80,
+        width: 3,
+        height: 120,
         displayValue: true,
-        fontSize: 14,
-        margin: 10,
+        fontSize: 18,
+        margin: 16,
       });
     } catch {
       // 無効なJANコードの場合はスキップ
@@ -32,12 +32,11 @@ function BarcodeItem({ item }: BarcodeItemProps) {
   }, [item.jan]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center gap-2">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center gap-2 w-full">
       {item.name && (
-        <p className="text-sm text-gray-600 font-medium text-center">{item.name}</p>
+        <p className="text-base text-gray-600 font-medium text-center">{item.name}</p>
       )}
-      <svg ref={svgRef} />
-      <p className="text-xs text-gray-400">{item.jan}</p>
+      <svg ref={svgRef} className="w-full" />
     </div>
   );
 }
@@ -64,7 +63,7 @@ export default function BarcodeList({ items }: BarcodeListProps) {
           印刷
         </button>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="flex flex-col gap-4">
         {items.map((item, i) => (
           <BarcodeItem key={i} item={item} />
         ))}
